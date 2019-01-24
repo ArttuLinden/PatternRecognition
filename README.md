@@ -1,8 +1,14 @@
 # Pattern Recognition and Machine Learning
 ## TAU Robot Surface Detection
+
 ## Team 30
+* Arttu Linden
+* Meri Mäkelä
+* Reetta Nätkin
+* Tatu Mäkinen
 
 Kaggle competition for detection of floor types using accelerometer measurements.
+
 https://www.kaggle.com/c/robotsurface/
 
 #### Meeting 24.1.
