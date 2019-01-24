@@ -1,7 +1,10 @@
 # Pattern Recognition and Machine Learning
-## TAU Robot Surface Detection
+TAU Robot Surface Detection
+---------------------------
+
 ![logo](https://storage.googleapis.com/kaggle-competitions/kaggle/12598/logos/header.png)
-*Team 30*
+
+**Team 30**
 * Arttu Linden
 * Meri Mäkelä
 * Reetta Nätkin
