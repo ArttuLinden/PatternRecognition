@@ -1,7 +1,6 @@
+![Robot logo](logo.png?raw=true)
 # Pattern Recognition and Machine Learning
 ### TAU Robot Surface Detection
-
-![Robot logo](logo.png?raw=true)
 
 **Team 30**
 * Arttu Linden
