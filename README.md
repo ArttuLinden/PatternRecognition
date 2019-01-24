@@ -1,8 +1,4 @@
 ![Robot logo](logo.png?raw=true)
-
-<img src="https://storage.googleapis.com/kaggle-competitions/kaggle/12598/logos/header.png" alt="Kitten"
-	title="A cute kitten" width="150" height="100" />
-  
 # Pattern Recognition and Machine Learning
 ### TAU Robot Surface Detection
 
