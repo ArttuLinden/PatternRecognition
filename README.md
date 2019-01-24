@@ -2,7 +2,7 @@
 TAU Robot Surface Detection
 ---------------------------
 
-![logo](https://storage.googleapis.com/kaggle-competitions/kaggle/12598/logos/header.png)
+![logo](https://storage.googleapis.com/kaggle-competitions/kaggle/12598/logos/header.png?raw=true)
 
 **Team 30**
 * Arttu Linden
