@@ -1,8 +1,7 @@
 # Pattern Recognition and Machine Learning
-TAU Robot Surface Detection
----------------------------
+### TAU Robot Surface Detection
 
-![Robot logo](https://storage.googleapis.com/kaggle-competitions/kaggle/12598/logos/header.png?raw=true "logo")
+![Robot logo](logo.png?raw=true)
 
 **Team 30**
 * Arttu Linden
