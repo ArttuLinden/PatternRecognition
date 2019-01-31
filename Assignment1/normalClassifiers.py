@@ -60,7 +60,7 @@ def getRelevantData(X,method):
     elif method == 'abs_acc_xy':
         # Acceleration as absolute values in X and Y directions
         X = X[:,4:7]
-        X[:,4:6] = np.abs(X[:,4:6])
+        X[:,:2] = np.abs(X[:,:2])
     else:
         raise ValueError('Unknown data limiting method')
     return X
