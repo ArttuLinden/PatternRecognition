@@ -10,6 +10,14 @@
 
 [Kaggle competition](https://www.kaggle.com/c/robotsurface/) for detection of floor types using accelerometer measurements.
 
+#### Meeting 31.1
+- Plottauksia datasta - Arttu ja Tatu
+- XGBoost - Tatu
+- cross validation kuntoon
+- Arttu ja Meri tekee omat palautukset
+- taulukko metodeista, kunhan testaus saatu luotettavaksi
+
+
 #### Meeting 24.1.
 - tällä viikolla kaikki tekee version tehtävään 1
 - seuraava tapaaminen TO 31.1. klo 14
