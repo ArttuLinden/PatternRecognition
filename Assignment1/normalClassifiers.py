@@ -49,6 +49,9 @@ def makeFeatureMatrix(X,method):
     elif method == 'mean':
         # Mean over time axis - 10 D
         X = np.mean(X,2)
+    elif method == 'std':
+        # Standard deviation over time axis - 10 D
+        X = np.std(X,2)
     elif method == 'mean_std':
         # Mean and std over time axis - 20 D
         X = np.hstack([np.mean(X,2),np.std(X,2)])
@@ -124,19 +127,27 @@ def makeSubmissionFile(clf,data,le,limitmethod,featuremethod):
 #     - classifiers
 #==============================================================================
 
-# To control reliability of evalutation vs. speed
+# Control reliability of evalutation vs. speed
 n_splits = 3
 
+# Filter data:
+# basic:    'orient','vel','acc','orient_vel','orient_acc','vel_acc','all'
+# advanced: 'abs_acc_xy'
 limit_methods = ['orient','vel','acc','orient_vel','orient_acc','vel_acc','all',
                  'abs_acc_xy']
 
-feature_methods = ['mean','mean_std','all']
+# Extract features:
+# basic:    'mean','std','mean_std','all'
+feature_methods = ['mean','std','mean_std','all']
 
+# Classifiers:
+# linear:   LDA(),LogR(),SGDC()
+# svm:      SVC(),LinearSVC()
+# ensemble: RFC(),Xtree(),AdaB(),GradB()
 classifiers = [LDA(),
                LinearSVC(), # fails to converge
                SGDC(),
                SVC(),
-               RFC(),
                RFC(),
                LogR(),
                XTree(),
@@ -149,10 +160,21 @@ for limit_method in limit_methods:
     for feature_method in feature_methods:
         for clf in classifiers:
             scores = test_classifier(data,clf,limit_method,feature_method,n_splits)
-            all_scores.append([limit_method,feature_method,scores])
+            all_scores.append([clf.__class__.__name__,limit_method,feature_method,scores])
             mean_score = np.mean(scores)
             print("{:.5f} accuracy for {}, {}, {}".format(
                 mean_score,limit_method,feature_method,clf.__class__.__name__))
+
+# %%==============================================================================
+# Printing summary of results
+#==============================================================================
+all_scores = np.array(all_scores)
+print("Summary\n=============================")
+limit_sort_inds = np.argsort(all_scores[0,:])
+
+
+feature_sort_inds = np.argsort(all_scores[1,:])
+
 
 # For submitting results
 """
@@ -161,4 +183,13 @@ print("Chosen classifier is {} with mean accuracy {:.5}".format(
         chosen_clf.__class__.__name__, np.max(mean_scores)))
 
 makeSubmissionFile(clf,data,le,limitmethod,featuremethod)
+"""
+# For saving data
+"""
+data = []
+for score in all_scores:
+    data.append([score[0],score[1],score[2],np.mean(score[3])])
+    
+data = np.array(data)
+np.save('all_scores',data)
 """
