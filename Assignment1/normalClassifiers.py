@@ -168,8 +168,8 @@ feature_methods = ['mean','std','mean_std','all']
 # neural:   MLPC()
 
 
-classifiers = [LDA(),LogR(),SGDC(),SVC(),LinearSVC(),RFC(),XTree(),AdaB(), \
-                GradB(),KNN(),(),NearC(),MLPC()]
+classifiers = [MLPC(),LDA(),LogR(),SGDC(),SVC(),LinearSVC(),RFC(),XTree(),AdaB(), \
+                GradB(),KNN()]
 
 clf_names = [x.__class__.__name__ for x in classifiers]
 
@@ -193,7 +193,7 @@ np.save('new_scores',data)
 
 
 #%% For submitting results
-clf = RFC(n_estimators = 100)
-limitmethod = 'vel_abs_acc_xy'
-featuremethod = 'mean_std'
-makeSubmissionFile(clf,data,le,limitmethod,featuremethod,1)
+#clf = RFC(n_estimators = 100)
+#limitmethod = 'vel_abs_acc_xy'
+#featuremethod = 'mean_std'
+#makeSubmissionFile(clf,data,le,limitmethod,featuremethod,1)
