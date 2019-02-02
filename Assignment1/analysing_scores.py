@@ -53,6 +53,6 @@ limit_method_summary = getScores(all_scores,1)
 feature_method_summary = getScores(all_scores,2)
 
 
-plotSummary(classifier_summary)
-plotSummary(limit_method_summary)
-plotSummary(feature_method_summary)
+#plotSummary(classifier_summary)
+#plotSummary(limit_method_summary)
+#plotSummary(feature_method_summary)

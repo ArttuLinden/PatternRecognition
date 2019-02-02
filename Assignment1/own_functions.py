@@ -83,7 +83,7 @@ def testClassifier(data,clf,limitmethod,featuremethod,n_splits):
     cv = GroupShuffleSplit(n_splits=n_splits,test_size=0.2)
     return cross_val_score(clf,X_f,y,groups,cv=cv)
 
-def makeSubmissionFile(clf,data,le,limitmethod,featuremethod,aug_on=0):
+def makeSubmissionFile(clf,data,limitmethod,featuremethod,aug_on=0):
     X = data[0]
     y = data[1]
     X_test = data[3]
@@ -93,13 +93,32 @@ def makeSubmissionFile(clf,data,le,limitmethod,featuremethod,aug_on=0):
     X_test_f = getFeatures(X_test,featuremethod)
     clf.fit(X_f,y)
     y_pred = clf.predict(X_test_f)
+    
+# =============================================================================
+# Data augmentation:
+# =============================================================================
     # Use predictions to fit to test data as well
+    # predictions that are > aug_limit sure will be used
     if aug_on == 1:
-        X_augmented = np.vstack((X_f,X_test_f))
-        y_augmented = np.hstack((y,y_pred))
+        aug_limit = 0.8
+        print("Augmenting with test samples whose predictions are {}% sure."\
+              .format(aug_limit*100))
+        
+        test_pred = clf.predict_proba(X_test_f)
+        good_feats = X_test_f[(np.max(test_pred,1)>aug_limit),:]
+        good_preds = y_pred[(np.max(test_pred,1)>aug_limit)]
+        print("Augmented with {:.2f} % of the test samples".format(
+                100*np.shape(good_preds)[0]/np.shape(y_pred)[0]))
+        
+        X_augmented = np.vstack((X_f,good_feats))
+        y_augmented = np.hstack((y,good_preds))
+        
         clf.fit(X_augmented,y_augmented)
         y_pred = clf.predict(X_test_f)
     
+    y_orig = data[4]
+    le = LabelEncoder()
+    le.fit(y_orig[:,1])
     labels =list(le.inverse_transform(y_pred))
 
     with open("submission.csv", "w") as f:
@@ -119,5 +138,5 @@ def loadData(folder):
     le.fit(y_orig[:,1])
     y = le.transform(y_orig[:,1])
     groups = to_numeric(read_csv(folder+'groups.csv').values[:,1])
-    data = [X,y,groups,X_test_orig]
+    data = [X,y,groups,X_test_orig,y_orig]
     return data
