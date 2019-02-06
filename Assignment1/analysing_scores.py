@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-all_scores = np.load('qwe_scores.npy')
+all_scores = np.load('all_scores_temp.npy')
 
 def getScores(all_scores,column):
     summary = []

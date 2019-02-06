@@ -30,7 +30,7 @@ if __name__ == '__main__':
     data = loadData(folder)
     
     # Control reliability of evalutation vs. speed
-    n_splits = 1
+    n_splits = 100
     
     # =============================================================================
     # FILTER:
@@ -38,14 +38,14 @@ if __name__ == '__main__':
     # basic:    'orient','vel','acc','orient_vel','orient_acc','vel_acc','all'
     # advanced: 'abs_acc_xy','vel_abs_acc_xy'
     
-    limits = ['all']
+    limits = ['vel_acc']
     
     # =============================================================================
     # FEATURES:
     # =============================================================================
     # basic:    'mean','std','mean_std','all'
-    
-    feats = ['mean_std']
+    # advanced:  'fftmean_fft_std','fft2peaks_fftstd_fftmean_mean_std'
+    feats = ['fft2peaks_fftstd_fftmean_mean_std']
     
     # =============================================================================
     # CLASSIFIERS:
@@ -61,15 +61,14 @@ if __name__ == '__main__':
 #    clf_names = [x.__class__.__name__+ str(x.n_neighbors) for x in clfs]
     
 #    XGBOOST params - max_depth, min_child_weight, gamma
-    clfs = [XGB(max_depth=x) for x in range(1,10)]+\
-            [XGB(min_child_weight=x) for x in range(1,10)]+\
-            [XGB(gamma=x) for x in np.linspace(0,1,10)]
-    
+    clfs = [XGB(gamma=x) for x in [0.84,0.87]]
     clf_names = ['XGB depth={} child={} gamma={:.2}'.format(
-            x.max_depth,x.min_child_weight,float(x.gamma)) for x in clfs]
+        x.max_depth,x.min_child_weight,float(x.gamma)) for x in clfs]
     
-    
-    
+#    clfs = [LDA(),LogR(),\
+#            RFC(n_estimators=100),XTree(n_estimators=100),GradB(n_estimators=100),XGB(),\
+#            KNN(n_neighbors=3),KNN(n_neighbors=5),KNN(n_neighbors=10)]
+#    clf_names = [x.__class__.__name__ for x in clfs]
     
     
     all_scores = []
@@ -86,7 +85,7 @@ if __name__ == '__main__':
     for score in all_scores:
         data.append([score[0],score[1],score[2],np.mean(score[3])])
     data = np.array(data)
-    np.save('xgb_scores',data)
+    np.save('all_scores_temp',data)
 
 
 #%% For submitting results

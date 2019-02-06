@@ -18,7 +18,7 @@ if __name__ == '__main__':
     data = loadData(folder)
     
     # Control reliability of evalutation vs. speed
-    n_splits = 10
+    n_splits = 1
     
     # =============================================================================
     # FILTER:
@@ -26,25 +26,26 @@ if __name__ == '__main__':
     # basic:    'orient','vel','acc','orient_vel','orient_acc','vel_acc','all'
     # advanced: 'abs_acc_xy','vel_abs_acc_xy'
     
-    limits = ['all']
+    limits = ['vel_acc']
     
     # =============================================================================
     # FEATURES:
     # =============================================================================
     # basic:    'mean','std','mean_std','all'
+    # advanced: 'fft','max3fftpeaks','mean_std_max3fftpeaks'
     
-    feats = ['mean_std']
+    feats = ['max3fftpeaks','mean_std_max3fftpeaks']
     
     # =============================================================================
     # CLASSIFIERS:
     # =============================================================================
     # XGBOOST params - max_depth, min_child_weight, gamma
     
-    clfs = [XGB(max_depth=x) for x in range(1,10)]+\
-            [XGB(min_child_weight=x) for x in range(1,10)]+\
-            [XGB(gamma=x) for x in np.linspace(0,1,10)]
+#    clfs = [XGB(max_depth=x) for x in range(1,10)]+\
+#            [XGB(min_child_weight=x) for x in range(1,10)]+\
+#            [XGB(gamma=x) for x in np.linspace(0,1,10)]
     
-    depths = np.arange(0,10)
+    depths = np.arange(1,10)
     childs = np.arange(0,10)
     gammas = np.linspace(0,1,10)
     
@@ -66,7 +67,7 @@ if __name__ == '__main__':
     for score in xgb_scores:
         data.append([score[0],score[1],score[2],np.mean(score[3])])
     data = np.array(data)
-    np.save('xgb_scores',data)
+    np.save('fft_scores',data)
 
 
 #%% For submitting results

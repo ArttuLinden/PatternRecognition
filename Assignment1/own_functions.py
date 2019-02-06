@@ -11,6 +11,7 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import GroupShuffleSplit, cross_val_score
 import numpy as np
 import csv
+from scipy import signal
 
 def getFeatures(X,method):
     # if 2D data, expand to 3D
@@ -29,6 +30,74 @@ def getFeatures(X,method):
     elif method == 'mean_std':
         # Mean and std over time axis - 20 D
         X = np.hstack([np.mean(X,2),np.std(X,2)])
+# =============================================================================
+#         Fourier stuff
+# =============================================================================
+    elif method == 'fft':
+        # Fourier transform
+        fft = np.abs(np.fft.fft(X))[:,:,:63]
+        X = fft.reshape([np.shape(fft)[0],np.shape(fft)[1]*np.shape(fft)[2]])
+    elif method == 'fftpow2':
+        # Fourier to power 2
+        fft = np.abs(np.fft.fft(X))[:,:,:63]**2
+        X = fft.reshape([np.shape(fft)[0],np.shape(fft)[1]*np.shape(fft)[2]])
+    elif method == 'fftlog10':
+        # log of Fourier
+        fft = np.log10(np.abs(np.fft.fft(X))[:,:,:63])
+        X = fft.reshape([np.shape(fft)[0],np.shape(fft)[1]*np.shape(fft)[2]])
+    elif method == 'fftmean_fftstd':
+        # Fourier combined with mean and std
+        fft = np.abs(np.fft.fft(X))[:,:,:63]
+        X = np.hstack([np.mean(fft,2),np.std(fft,2)])
+    elif method == 'fftlog10mean_fftlog10std':
+        # Fourier combined with mean and std
+        fft = np.log10(np.abs(np.fft.fft(X))[:,:,:63])
+        X = np.hstack([np.mean(fft,2),np.std(fft,2)])
+    elif method == 'mean_std_fftmean_fftstd':
+        # Normal mean & std combined with Fourier mean std
+        fft = np.abs(np.fft.fft(X))[:,:,:63]
+        X = np.hstack([np.mean(X,2),np.std(X,2),np.mean(fft,2),np.std(fft,2)])
+    elif method == 'max2fftpeaks':
+        # Maximum 2 peaks in Fourier
+        fft = np.abs(np.fft.fft(X))[:,:,:63]
+        peaks = getMaxpeaks(fft,2)
+        X = peaks.reshape([np.shape(peaks)[0],np.shape(peaks)[1]*np.shape(peaks)[2]])
+    elif method == 'max3fftpeaks':
+        # Maximum 3 peaks in Fourier
+        fft = np.abs(np.fft.fft(X))[:,:,:63]
+        peaks = getMaxpeaks(fft)
+        X = peaks.reshape([np.shape(peaks)[0],np.shape(peaks)[1]*np.shape(peaks)[2]])
+    elif method == 'mean_std_max3fftpeaks':
+        fft = np.abs(np.fft.fft(X))[:,:,:63]
+        mean = np.expand_dims(np.mean(X,2), axis=2)
+        std = np.expand_dims(np.std(X,2), axis=2)
+        peaks = getMaxpeaks(fft)
+        result = np.vstack([mean.T,std.T,peaks.T]).T        
+        X = result.reshape([np.shape(result)[0],np.shape(result)[1]*np.shape(result)[2]])
+    elif method == 'mean_std_max3fftpeaks':
+        fft = np.abs(np.fft.fft(X))[:,:,:63]
+        mean = np.expand_dims(np.mean(X,2), axis=2)
+        std = np.expand_dims(np.std(X,2), axis=2)
+        peaks = getMaxpeaks(fft)
+        result = np.vstack([mean.T,std.T,peaks.T]).T        
+        X = result.reshape([np.shape(result)[0],np.shape(result)[1]*np.shape(result)[2]])
+    elif method == 'fft2peaks_fftstd_fftmean':
+        fft = np.abs(np.fft.fft(X))[:,:,:63]
+        mean = np.expand_dims(np.mean(fft,2), axis=2)
+        std = np.expand_dims(np.std(fft,2), axis=2)
+        peaks = getMaxpeaks(fft,2)
+        result = np.vstack([mean.T,std.T,peaks.T]).T        
+        X = result.reshape([np.shape(result)[0],np.shape(result)[1]*np.shape(result)[2]])
+    elif method == 'fft2peaks_fftstd_fftmean_mean_std':
+        fft = np.abs(np.fft.fft(X))[:,:,:63]
+        fftmean = np.expand_dims(np.mean(fft,2), axis=2)
+        fftstd = np.expand_dims(np.std(fft,2), axis=2)
+        mean = np.expand_dims(np.mean(X,2), axis=2)
+        std = np.expand_dims(np.std(X,2), axis=2)
+        peaks = getMaxpeaks(fft,2)
+        result = np.vstack([fftmean.T,fftstd.T,peaks.T,mean.T,std.T]).T        
+        X = result.reshape([np.shape(result)[0],np.shape(result)[1]*np.shape(result)[2]])
+        
     else:
         raise ValueError('Unknown feature extraction method')
     return X
@@ -140,3 +209,18 @@ def loadData(folder):
     groups = to_numeric(read_csv(folder+'groups.csv').values[:,1])
     data = [X,y,groups,X_test_orig,y_orig]
     return data
+
+def getMaxpeaks(X,num_peaks=3):
+    out = np.zeros([np.shape(X)[0],np.shape(X)[1],num_peaks])
+    for a,sample in enumerate(X):
+        for b,data in enumerate(sample):
+            peaks = signal.find_peaks(data,height=np.max(data)*0.5)[0]
+            if peaks.size > 0:
+                values = data[peaks]
+                sorted_inds = np.argsort(values)[::-1]
+                end = np.min([num_peaks,len(sorted_inds)])
+                out[a,b,:end] = peaks[sorted_inds[:end]]
+    return out
+                    
+                
+            
