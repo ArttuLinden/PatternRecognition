@@ -10,6 +10,11 @@
 
 [Kaggle competition](https://www.kaggle.com/c/robotsurface/) for detection of floor types using accelerometer measurements.
 
+#### Meeting 7.2.
+- Tatu ja Reetta tekee raportin rungon - palautus maanantaina
+- Fourier analyysissa potentiaalia
+- Siirrytään neuroverkkoihin
+
 #### Meeting 31.1
 - Plottauksia datasta - Arttu ja Tatu
 - XGBoost - Tatu
