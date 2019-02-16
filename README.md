@@ -2,11 +2,7 @@
 # Pattern Recognition and Machine Learning
 ### TAU Robot Surface Detection
 
-**Team 30**
-* Arttu Linden
-* Meri Mäkelä
-* Reetta Nätkin
-* Tatu Mäkinen
+**Team 30** - Arttu Linden, Meri Mäkelä, Reetta Nätkin, Tatu Mäkinen
 
 [Kaggle competition](https://www.kaggle.com/c/robotsurface/) for detection of floor types using accelerometer measurements.
 
@@ -34,5 +30,6 @@
 
 
 ### Assignment Task 1 - scikit-learn- Deadline 11.2. 23:59
+[Report](Assignment 1 report.pdf)
 
 ### Assignment Task 2 - Keras - Deadline 1.3. 23:59
