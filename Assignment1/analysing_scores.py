@@ -1,7 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-all_scores = np.load('all_scores_temp.npy')
+all_scores = np.load('pca_comparison.npy')
+
+#fft_scores = np.load('feature_comparison_fft.npy')
+#all_scores = np.vstack((all_scores,fft_scores))
+
 
 def getScores(all_scores,column):
     summary = []
@@ -47,11 +51,22 @@ def printSummary(summary,ind):
     print("Best {} on average:  {}\n(with {:.5} mean acc)".format(names[ind],best_thing[0],np.mean(best_thing[2])))
     print("=================================================")
 
+def makeLatexTable(all_scores,column):
+    scores = np.array(all_scores)
 
-classifier_summary = getScores(all_scores,0)
-limit_method_summary = getScores(all_scores,1)
-feature_method_summary = getScores(all_scores,2)
+    sortInds = np.argsort(scores[:,3])[::-1]
+    scores = scores[sortInds]
+    with open('table.txt','w') as f:
+        for score in scores:
+            f.write("{:.6} & {} \\\\\n".format(score[3],score[column]))
+    
 
+
+#classifier_summary = getScores(all_scores,0)
+#limit_method_summary = getScores(all_scores,1)
+#feature_method_summary = getScores(all_scores,2)
+
+makeLatexTable(all_scores,1)
 
 #plotSummary(classifier_summary)
 #plotSummary(limit_method_summary)

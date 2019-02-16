@@ -6,18 +6,22 @@ Created on Sat Feb  2 08:58:44 2019
 @author: tatu
 """
 
+# TEST median filtering
+
 from pandas import read_csv,to_numeric
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import GroupShuffleSplit, cross_val_score
+from sklearn.metrics import accuracy_score
 import numpy as np
 import csv
 from scipy import signal
+from sklearn.preprocessing import StandardScaler  
+from sklearn.decomposition import PCA
 
-def getFeatures(X,method):
+def getFeatures(X,method,normalize,pca_n):
     # if 2D data, expand to 3D
     if len(np.shape(X)) == 2:
         X = np.expand_dims(X, axis=1)
-            
     if method == 'all':
         # All sensors together - 1280 D
         X = np.reshape(X,[np.shape(X)[0],np.shape(X)[1]*np.shape(X)[2]])
@@ -33,6 +37,13 @@ def getFeatures(X,method):
 # =============================================================================
 #         Fourier stuff
 # =============================================================================
+    elif method == 'PSD':
+        sample_freqs,PSD = signal.periodogram(X)
+        X = PSD.reshape([np.shape(PSD)[0],np.shape(PSD)[1]*np.shape(PSD)[2]])
+    elif method == 'logPSD':
+        sample_freqs,PSD = signal.periodogram(X)
+        scaledPSD = np.log10(PSD+1)
+        X = scaledPSD.reshape([np.shape(scaledPSD)[0],np.shape(scaledPSD)[1]*np.shape(scaledPSD)[2]])
     elif method == 'fft':
         # Fourier transform
         fft = np.abs(np.fft.fft(X))[:,:,:63]
@@ -43,13 +54,18 @@ def getFeatures(X,method):
         X = fft.reshape([np.shape(fft)[0],np.shape(fft)[1]*np.shape(fft)[2]])
     elif method == 'fftlog10':
         # log of Fourier
-        fft = np.log10(np.abs(np.fft.fft(X))[:,:,:63])
+        fft = np.log10(np.abs(np.fft.fft(X))[:,:,:63]+1)
         X = fft.reshape([np.shape(fft)[0],np.shape(fft)[1]*np.shape(fft)[2]])
+    elif method == 'fftlog10_all':
+        # data in fourier and normal combined
+        fft = np.log10(np.abs(np.fft.fft(X))[:,:,:63]+1)
+        result = np.vstack([fft.T,X.T]).T
+        X = result.reshape([np.shape(result)[0],np.shape(result)[1]*np.shape(result)[2]])
     elif method == 'fftmean_fftstd':
         # Fourier combined with mean and std
         fft = np.abs(np.fft.fft(X))[:,:,:63]
         X = np.hstack([np.mean(fft,2),np.std(fft,2)])
-    elif method == 'fftlog10mean_fftlog10std':
+    elif method == 'fftmean_fftstd':
         # Fourier combined with mean and std
         fft = np.log10(np.abs(np.fft.fft(X))[:,:,:63])
         X = np.hstack([np.mean(fft,2),np.std(fft,2)])
@@ -74,13 +90,6 @@ def getFeatures(X,method):
         peaks = getMaxpeaks(fft)
         result = np.vstack([mean.T,std.T,peaks.T]).T        
         X = result.reshape([np.shape(result)[0],np.shape(result)[1]*np.shape(result)[2]])
-    elif method == 'mean_std_max3fftpeaks':
-        fft = np.abs(np.fft.fft(X))[:,:,:63]
-        mean = np.expand_dims(np.mean(X,2), axis=2)
-        std = np.expand_dims(np.std(X,2), axis=2)
-        peaks = getMaxpeaks(fft)
-        result = np.vstack([mean.T,std.T,peaks.T]).T        
-        X = result.reshape([np.shape(result)[0],np.shape(result)[1]*np.shape(result)[2]])
     elif method == 'fft2peaks_fftstd_fftmean':
         fft = np.abs(np.fft.fft(X))[:,:,:63]
         mean = np.expand_dims(np.mean(fft,2), axis=2)
@@ -89,17 +98,45 @@ def getFeatures(X,method):
         result = np.vstack([mean.T,std.T,peaks.T]).T        
         X = result.reshape([np.shape(result)[0],np.shape(result)[1]*np.shape(result)[2]])
     elif method == 'fft2peaks_fftstd_fftmean_mean_std':
-        fft = np.abs(np.fft.fft(X))[:,:,:63]
-        fftmean = np.expand_dims(np.mean(fft,2), axis=2)
-        fftstd = np.expand_dims(np.std(fft,2), axis=2)
-        mean = np.expand_dims(np.mean(X,2), axis=2)
-        std = np.expand_dims(np.std(X,2), axis=2)
+        fft = np.abs(np.fft.fft(X[:,4:]))[:,:,:63]
+        fftmean = np.mean(fft,2)
+        fftstd = np.std(fft,2)
+        mean = np.mean(X,2)
+        std = np.std(X,2)
         peaks = getMaxpeaks(fft,2)
-        result = np.vstack([fftmean.T,fftstd.T,peaks.T,mean.T,std.T]).T        
-        X = result.reshape([np.shape(result)[0],np.shape(result)[1]*np.shape(result)[2]])
+        peaks = peaks.reshape(np.shape(peaks)[0],np.shape(peaks)[1]*np.shape(peaks)[2])
+        X = np.vstack([fftmean.T,fftstd.T,peaks.T,mean.T,std.T]).T        
+# =============================================================================
+# More tests
+# =============================================================================
+    elif method == 'fftlog1030PCA_mean_std':
+        mean = np.mean(X,2)
+        std = np.std(X,2)
+        
+        fft = np.log10(np.abs(np.fft.fft(X[:,4:]))[:,:,:63]+1)
+        fft = fft.reshape([np.shape(fft)[0],np.shape(fft)[1]*np.shape(fft)[2]])
+        pca = PCA(n_components=25)
+        fft = pca.fit_transform(fft)
+        
+        X = np.vstack([fft.T,mean.T,std.T]).T
+    elif method == 'maxPSD_mean_std':
+        mean = np.mean(X,2)
+        std = np.std(X,2)
+        
+        sample_freqs,PSD = signal.periodogram(X[:,4:])
+        scaledPSD = np.log10(PSD+1)
+        maxPSD = np.argmax(scaledPSD,2)        
+        X = np.vstack([maxPSD.T,mean.T,std.T]).T
         
     else:
         raise ValueError('Unknown feature extraction method')
+        
+    if normalize == True:
+        # Scaling to zero mean and unit variance
+        X = StandardScaler().fit_transform(X.astype('float').T).T
+    if pca_n >0:
+        pca = PCA(n_components=pca_n)
+        X = pca.fit_transform(X)
     return X
 
 def getRelevantData(X,method):
@@ -109,6 +146,10 @@ def getRelevantData(X,method):
     if method == 'all':
         # Everything
         pass
+    elif isinstance(method,int) == True:
+        # Leave one channel out
+        channels = [x for x in range(10) if x != int(method)]
+        X = X[:,channels]
     elif method == 'orient':
         # Only orientation
         X = X[:,:4]
@@ -142,24 +183,40 @@ def getRelevantData(X,method):
         raise ValueError('Unknown data limiting method')
     return X
 
-def testClassifier(data,clf,limitmethod,featuremethod,n_splits):
+def testClassifier(data,clf,limitmethod,featuremethod,n_splits,normalize=False,pca_n=0):
+    X = data[0]
+    X = getRelevantData(X,limitmethod)
+    X_f = getFeatures(X,featuremethod,normalize,pca_n)
+    y = data[1]
+    groups = data[2]
+    
+    cv = GroupShuffleSplit(n_splits=n_splits,test_size=0.2,random_state=0)
+    return cross_val_score(clf,X_f,y,groups,cv=cv)
+
+def testHyperopt(data,clf,limitmethod,featuremethod):
     X = data[0]
     X = getRelevantData(X,limitmethod)
     X_f = getFeatures(X,featuremethod)
     y = data[1]
     groups = data[2]
     
-    cv = GroupShuffleSplit(n_splits=n_splits,test_size=0.2)
-    return cross_val_score(clf,X_f,y,groups,cv=cv)
+    cv = GroupShuffleSplit(n_splits=1,test_size=0.2)
+    for train_inds,test_inds in cv.split(X,y,groups):
+        clf.fit(X_f[train_inds],y[train_inds])
+        score = clf.score(X_f[test_inds],y[test_inds])
+        bst = clf.best_model()
+        print(score)
+        print(bst)
+    return score,bst
 
-def makeSubmissionFile(clf,data,limitmethod,featuremethod,aug_on=0):
+def makeSubmissionFile(clf,data,limitmethod,featuremethod,aug_on=0,normalize=False,pca_n=0):
     X = data[0]
     y = data[1]
     X_test = data[3]
     X = getRelevantData(X,limitmethod)
-    X_f = getFeatures(X,featuremethod)
+    X_f = getFeatures(X,featuremethod,normalize,pca_n)
     X_test = getRelevantData(X_test,limitmethod)
-    X_test_f = getFeatures(X_test,featuremethod)
+    X_test_f = getFeatures(X_test,featuremethod,normalize,pca_n)
     clf.fit(X_f,y)
     y_pred = clf.predict(X_test_f)
     
@@ -185,9 +242,7 @@ def makeSubmissionFile(clf,data,limitmethod,featuremethod,aug_on=0):
         clf.fit(X_augmented,y_augmented)
         y_pred = clf.predict(X_test_f)
     
-    y_orig = data[4]
-    le = LabelEncoder()
-    le.fit(y_orig[:,1])
+    le = data[5]
     labels =list(le.inverse_transform(y_pred))
 
     with open("submission.csv", "w") as f:
@@ -207,7 +262,7 @@ def loadData(folder):
     le.fit(y_orig[:,1])
     y = le.transform(y_orig[:,1])
     groups = to_numeric(read_csv(folder+'groups.csv').values[:,1])
-    data = [X,y,groups,X_test_orig,y_orig]
+    data = [X,y,groups,X_test_orig,y_orig,le]
     return data
 
 def getMaxpeaks(X,num_peaks=3):
@@ -221,6 +276,58 @@ def getMaxpeaks(X,num_peaks=3):
                 end = np.min([num_peaks,len(sorted_inds)])
                 out[a,b,:end] = peaks[sorted_inds[:end]]
     return out
-                    
+
+def own_cross_val_score(clf,X,y,groups,cv):
+    scores = []
+    for train_index, test_index in cv.split(X,y,groups):
+        # Split data to train and test set
+        X_train = X[train_index]
+        y_train = y[train_index]
+
+        X_test = X[test_index]
+        y_test = y[test_index]
+
+        # Fitting and prediction
+        clf.fit(X_train,y_train)
+        y_pred = clf.predict(X_test)
+        score = accuracy_score(y_test,y_pred)
+        scores.append(score)
+    return scores
                 
-            
+def printScores(clf):
+    results = clf.cv_results_
+    sortinds = np.argsort(results['mean_test_score'])[::-1]
+    sortedScores = np.array(results['mean_test_score'])[sortinds]
+    sortedParams = np.array(results['params'])[sortinds]
+    
+    highlightString = "*"*(4+len(clf.estimator.__class__.__name__))
+    print('\n{} results for\n\n* {} *\n{}'.format(
+            clf.__class__.__name__,
+            clf.estimator.__class__.__name__,
+            highlightString))
+    info = list(results['params'][0].keys())
+    headline = "{:20} |"*(np.size(info)+1)
+    textline = "{:20.6} |"+"{:20} | "*np.size(info)
+    print(headline.format('Accuracy',*info))
+    print("="*(np.size(info)+1)*23)
+        
+    for score,param in zip(sortedScores,sortedParams) :
+        values = list(param.values())
+        print(textline.format(score,*values))
+        
+    print("Best estimator:")
+    print(clf.best_estimator_)
+    
+    
+    #%%
+#fft = np.abs(np.fft.fft(X[:,4:]))[:,:,:63]
+#fftmean = np.mean(fft,2)
+#fftstd = np.std(fft,2)
+#mean = np.mean(X,2)
+#std = np.std(X,2)
+#peaks = getMaxpeaks(fft,2)
+#peaks = peaks.reshape(np.shape(peaks)[0],np.shape(peaks)[1]*np.shape(peaks)[2])
+#result = np.vstack([fftmean.T,fftstd.T,peaks.T,mean.T,std.T]).T        
+
+    
+    

@@ -26,13 +26,16 @@ from sklearn.neighbors import NearestCentroid as NearC
 from sklearn.neural_network import MLPClassifier as MLPC
 from xgboost import XGBClassifier as XGB
 from xgboost import plot_importance
+from sklearn.naive_bayes import GaussianNB
 
+# Voting for combining classifiers
+# from sklearn.ensemble import VotingClassifier
 if __name__ == '__main__':
     folder = getcwd() +'/robotsurface/'
     data = loadData(folder)
     
     # Control reliability of evalutation vs. speed
-    n_splits = 10
+    n_splits = 30
     
     # =============================================================================
     # FILTER:
@@ -40,14 +43,14 @@ if __name__ == '__main__':
     # basic:    'orient','vel','acc','orient_vel','orient_acc','vel_acc','all'
     # advanced: 'abs_acc_xy','vel_abs_acc_xy'
     
-    limits = ['all']
+    limits = ['vel_acc']
     
     # =============================================================================
     # FEATURES:
     # =============================================================================
     # basic:    'mean','std','mean_std','all'
     # advanced:  'fftmean_fft_std','fft2peaks_fftstd_fftmean_mean_std','fftlog10' 
-    feats = ['mean_std']
+    feats = ['fftlog10pca30']
     
     # =============================================================================
     # CLASSIFIERS:
@@ -70,23 +73,24 @@ if __name__ == '__main__':
     clfs = [LDA(),LogR(),SGDC(),
             LinearSVC(),
             MLPC(),
-            OneVsRestClassifier(LinearSVC())]
+            OneVsRestClassifier(LinearSVC()),
+            GaussianNB()]
     clf_names = [x.__class__.__name__ for x in clfs]
     
     # KNN with variable neighbors
     for n_neighbors in [5]:
         clfs.append(KNN(n_neighbors=n_neighbors))
-        clf_names.append("KNeighborsClassifier({} neighbors)".format(n_neighbors))
+        clf_names.append("KNeighborsClassifier ({} neighbors)".format(n_neighbors))
     
     # SVC with different kernels
     for kernel in ['linear', 'poly', 'rbf', 'sigmoid']:
         clfs.append(SVC(kernel=kernel))
-        clf_names.append("SVC({})".format(kernel))
+        clf_names.append("SVC ({})".format(kernel))
     
     # Ensemble with 100 and 200
     clfs_100 = [x(n_estimators=100) for x in [RFC,XTree,AdaB,GradB,XGB]]
     clfs.extend(clfs_100)
-    clf_names.extend([x.__class__.__name__+"(100 estimators)" for x in clfs_100])
+    clf_names.extend([x.__class__.__name__+" (100 estimators)" for x in clfs_100])
     
 #    clfs_200 = [x(n_estimators=200) for x in [RFC,XTree,AdaB,GradB,XGB]]
 #    clfs.extend(clfs_100)
@@ -118,7 +122,7 @@ if __name__ == '__main__':
     for score in all_scores:
         data.append([score[0],score[1],score[2],np.mean(score[3])])
     data = np.array(data)
-    np.save('classifier_comparison',data)
+    np.save('classifier_comparison_fftlog10pca30',data)
 
 
 #%% For submitting results
