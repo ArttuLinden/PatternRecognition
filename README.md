@@ -6,6 +6,11 @@
 
 [Kaggle competition](https://www.kaggle.com/c/robotsurface/) for detection of floor types using accelerometer measurements.
 
+### Meeting 21.2.
+- Regularisointi & feature selection metodien testaus
+- VGG16 IMU datalla?
+- Assignment 2: uudet ohjeet
+
 #### Meeting 14.2.
 - Kaikki kokeilee LSTM ja GRU malleja
 - voi käydä läpi valmiita keras malleja
